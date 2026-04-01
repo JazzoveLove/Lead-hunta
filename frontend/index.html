@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>LeadHunter</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">LH</div>
+    <span class="logo-text">LeadHunter</span>
+  </div>
+
+  <nav id="main-nav">
+    <button class="nav-item" data-view="dashboard">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-view="leads">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <circle cx="3" cy="6" r="1" fill="currentColor" stroke="none"/>
+        <circle cx="3" cy="12" r="1" fill="currentColor" stroke="none"/>
+        <circle cx="3" cy="18" r="1" fill="currentColor" stroke="none"/>
+      </svg>
+      Leady
+      <span class="nav-badge" id="nav-leads-badge"></span>
+    </button>
+    <button class="nav-item" data-view="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Szukaj
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span class="conn-dot"></span>
+    <span>Połączono</span>
+  </div>
+</aside>
+
+<!-- ── App Shell ─────────────────────────────────────────────────────────── -->
+<div id="app-shell">
+
+  <!-- Dashboard -->
+  <section class="view" id="view-dashboard">
+    <div class="view-header">
+      <h1>Dashboard</h1>
+    </div>
+    <div class="dash-cards" id="dash-cards"></div>
+    <div class="dash-lower">
+      <div class="dash-section">
+        <div class="section-title">Rozkład statusów</div>
+        <div id="status-breakdown"></div>
+      </div>
+      <div class="dash-section">
+        <div class="section-title">Top miasta</div>
+        <div id="top-cities"></div>
+      </div>
+      <div class="dash-section">
+        <div class="section-title">Top branże</div>
+        <div id="top-categories"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leads -->
+  <section class="view" id="view-leads">
+    <div class="view-header">
+      <h1>Leady</h1>
+      <div class="view-toggle">
+        <button class="toggle-btn toggle-table active" onclick="setViewMode('table')" title="Tabela">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>
+            <line x1="9" y1="9" x2="9" y2="21"/>
+          </svg>
+          Tabela
+        </button>
+        <button class="toggle-btn toggle-kanban" onclick="setViewMode('kanban')" title="Kanban">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/>
+            <rect x="17" y="3" width="5" height="15" rx="1"/>
+          </svg>
+          Kanban
+        </button>
+      </div>
+    </div>
+
+    <div class="leads-filters">
+      <input id="f-city"     type="text" placeholder="Miasto..."   oninput="renderLeadsView()" />
+      <input id="f-category" type="text" placeholder="Branża..."   oninput="renderLeadsView()" />
+      <select id="f-status"  onchange="renderLeadsView()">
+        <option value="">Wszystkie statusy</option>
+      </select>
+      <select id="f-website" onchange="renderLeadsView()">
+        <option value="">Obecność w sieci</option>
+        <option value="bez_strony">Bez strony i FB</option>
+        <option value="tylko_facebook">Tylko Facebook</option>
+      </select>
+      <button class="btn-clear" onclick="clearFilters()">✕ Wyczyść</button>
+    </div>
+
+    <div class="leads-stats" id="leads-stats"></div>
+
+    <!-- Table sub-view -->
+    <div id="leads-table-view">
+      <div class="table-wrapper">
+        <table id="leads-table">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortBy('name')">Nazwa firmy <span class="sort-icon" id="sort-name"></span></th>
+              <th>Adres</th>
+              <th>Telefon</th>
+              <th class="sortable" onclick="sortBy('reviews_count')">Opinie <span class="sort-icon" id="sort-reviews_count"></span></th>
+              <th class="sortable" onclick="sortBy('category')">Branża <span class="sort-icon" id="sort-category"></span></th>
+              <th class="sortable" onclick="sortBy('city')">Miasto <span class="sort-icon" id="sort-city"></span></th>
+              <th>Sieć</th>
+              <th class="sortable" onclick="sortBy('status')">Status <span class="sort-icon" id="sort-status"></span></th>
+              <th class="sortable" onclick="sortBy('created_at')">Dodano <span class="sort-icon" id="sort-created_at"></span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="leads-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Kanban sub-view -->
+    <div id="leads-kanban-view" style="display:none">
+      <div class="kanban-board" id="kanban-board"></div>
+    </div>
+  </section>
+
+  <!-- Search -->
+  <section class="view" id="view-search">
+    <div class="search-hero">
+      <div class="search-hero-inner">
+        <div class="search-hero-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <h2>Znajdź nowych klientów</h2>
+        <p>Przeszukaj Google Maps według branży i lokalizacji</p>
+        <div class="search-form-card">
+          <div class="search-inputs">
+            <div class="search-field">
+              <label for="inp-query">Branża / fraza</label>
+              <input id="inp-query" type="text" placeholder="np. mechanik, dentysta, prawnik..." />
+            </div>
+            <div class="search-field">
+              <label for="inp-city">Miasto</label>
+              <input id="inp-city" type="text" placeholder="np. Wrocław, Kraków..." />
+            </div>
+          </div>
+          <button class="btn-search" id="btn-search" onclick="runSearch()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Szukaj w Google Maps
+          </button>
+        </div>
+        <div id="search-result-info"></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /#app-shell -->
+
+<!-- ── Detail Panel ───────────────────────────────────────────────────────── -->
+<div id="panel-overlay" onclick="closePanel()"></div>
+
+<aside id="detail-panel">
+  <div class="panel-header">
+    <div class="panel-header-info">
+      <div id="panel-status-tag"></div>
+      <h3 class="panel-name" id="panel-name">—</h3>
+      <div class="panel-meta" id="panel-meta"></div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="panel-body">
+    <div class="panel-fields">
+      <div class="panel-field">
+        <div class="field-label">Adres</div>
+        <div class="field-value" id="panel-address"></div>
+      </div>
+      <div class="panel-field">
+        <div class="field-label">Telefon</div>
+        <div class="field-value" id="panel-phone"></div>
+      </div>
+      <div class="panel-field">
+        <div class="field-label">Opinie Google</div>
+        <div class="field-value" id="panel-reviews"></div>
+      </div>
+      <div class="panel-field">
+        <div class="field-label">Strona www</div>
+        <div class="field-value" id="panel-website"></div>
+      </div>
+      <div class="panel-field">
+        <div class="field-label">Dodano</div>
+        <div class="field-value" id="panel-date"></div>
+      </div>
+    </div>
+
+    <div class="panel-section-title">Status</div>
+    <select class="panel-status-select" id="panel-status-select"></select>
+
+    <div class="panel-section-title" style="margin-top:18px">Notatki</div>
+    <textarea class="panel-notes" id="panel-notes" rows="4" placeholder="Dodaj notatki o tym leadzie..."></textarea>
+
+    <button class="btn-save" onclick="savePanelChanges()">Zapisz zmiany</button>
+  </div>
+
+  <div class="panel-footer">
+    <button class="btn-panel-delete" onclick="deleteFromPanel()">Usuń leada</button>
+  </div>
+</aside>
+
+<div id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
